@@ -75,7 +75,7 @@ const services = [
     {
         id: 2,
         title: "beard trim",
-        image: "assets/images/feature-4.jpg",
+        image: "assets/images/feature-4.jpeg",
         alt: "Beard Trim",
         description: "Shape, line-up, and refine your beard for a clean finish.",
         price: 15,
@@ -230,3 +230,242 @@ const openServiceModal = (serviceId) => {
     document.body.style.overflow = "hidden"; //
     
 };
+
+const closeServiceModal = () => {
+    if (!serviceModal) return;
+
+    serviceModal.classList.remove("is-open");
+    serviceModal.setAttribute("aria-hidden", "true");
+    document.body.style.overflow = "";
+};
+
+// --- Render Functions ---
+const renderNavigation = () => {
+    if (nav) {
+    nav.innerHTML = navLinks
+    .map((link) => `<a href="${link.href}" class="nav-link">${link.label}</a>`)
+    .join("");
+    }
+
+    if (mobileMenu) {
+    mobileMenu.innerHTML = navLinks
+    .map((link) => `<a href="${link.href}" class="mobile-link">${link.label}</a>`)
+    .join("");
+    }
+};
+
+const renderServices = () => {
+    if (!featureGrid) return;
+
+    const servicesHTML = services
+    .map((service) => {
+    const badgeHTML = service.popular
+    ? `<p class="service-badge">Popular Choice</p>`
+    : `<p class="service-badge alt-badge">Barber Favorite</p>`;
+
+    return `
+        <article class="feature-card">
+            <img
+            src="${service.image}" 
+            alt="${service.alt}" 
+            class="feature-img"
+             />
+             <h3 class="feature-title">${service.title}</h3>
+             <p class="feature-description">${service.description}</p>
+             ${badgeHTML}
+             <p class="feature-price">$${service.price}</p>
+
+             <div class="service-actions">
+                <button
+                     class="service-details-btn"   
+                     type="button" 
+                     data-service-id="${service.id}"
+                >
+                    View Details
+                </button>
+             </div>
+        </article>
+    `;
+    })
+    .join("");
+
+    featureGrid.innerHTML = servicesHTML;
+};
+
+const renderHours = () => {
+    if (!hoursList) return;
+
+    hoursList.innerHTML = businessHours
+    .map((item) => {
+        if (item.open === 0 && item.close === 0) {
+            return `<li>${item.day}: Closed</li>`;
+        }
+        return `<li>${item.day}: ${formatHour(item.open)} - 
+        ${formatHour(item.close)}</li>`;
+    })
+    .join("");
+};
+
+const renderContactInfo = () => {
+    if (phoneLink) {
+        phoneLink.textContent = shopInfo.phoneDisplay;
+        phoneLink.href = `tel:${shopInfo.phoneRaw}`;
+    }
+
+    if (addressLink) {
+        addressLink.textContent = shopInfo.address;
+        addressLink.href = "#";
+    }
+
+    if (emailLink) {
+        emailLink.textContent = shopInfo.email;
+        emailLink.href = `mailto:${shopInfo.email}`;
+    }
+};
+
+//--- Open / Closed Logic ---
+const checkIfOpen = () => {
+    const now = new Date();
+    const currentDay = now.getDay();
+    const currentHour = now.getHours();
+
+    let schedule;
+
+    if (currentDay === 0) {
+        schedule = businessHours[6]; 
+    } else {
+        schedule = businessHours[currentDay - 1]; 
+    }   
+
+    if (schedule.open === 0 && schedule.close === 0) {
+        updateSubtext("Sorry, we're closed today. Book now for your next sharp look.");
+        return;
+    }
+
+    if (currentHour >= schedule.open && currentHour < schedule.close) {
+        updateSubtext("We're open now - walk-ins welcome, appointments recommended.");
+    } else {
+        updateSubtext("We're currently closed, but you can still book your next appointment.");
+    }
+};  
+
+// Scroll Shift Cards -----
+const setupScrollShiftCards = () => {
+    if (!featureGrid) return;
+
+    let lastscrollY = window.scrollY;
+    let currentX = 0;
+    let ticking = false;
+
+    const getVisibleWidth = () => {
+        const parent = featureGrid.parentElement;
+        return parent ? parent.clientWidth : window.innerWidth;
+    };
+
+    const getMaxShift = () => {
+        return Math.max(0, featureGrid.scrollWidth - getVisibleWidth());
+    };
+
+    const updateCardTrack = () => {
+        const currentScrollY = window.scrollY;
+        const scrollDelta = currentScrollY - lastscrollY;
+    
+        if (scrollDelta === 0) {
+            ticking = false;
+            return;
+        }
+
+        currentX += scrollDelta * 0.5;
+
+        const maxShift = getMaxShift();
+
+        if (currentX < -maxShift) currentX = -maxShift;
+        if (currentX > 0) currentX = 0;
+
+        featureGrid.style.transform = `translateX(${currentX}px)`;
+
+        lastscrollY = currentScrollY;
+        ticking = false;
+    };
+
+    window.addEventListener("scroll", () => {
+        if (!ticking) {
+            window.requestAnimationFrame(updateCardTrack);
+            ticking = true;
+        }
+    });
+
+    window.addEventListener("resize", () => {
+        const maxShift = getMaxShift();
+   
+        if (currentX < -maxShift) currentX = -maxShift;
+        if (currentX > 0) currentX = 0;
+
+        featureGrid.style.transform = `translateX(${currentX}px)`;
+    });
+};
+
+   // --- Event Listeners ---
+if (menuBtn) {
+ menuBtn.addEventListener("click", toggleMobileMenu);
+}
+   
+if (mobileMenu) {
+    mobileMenu.addEventListener("click", (event) => {
+        if (event.target.tagName === "A") {
+            closeMobileMenu();
+        }
+    });
+}
+
+if (ctaBtn) {
+    ctaBtn.addEventListener("click", () => {
+        const bookingSection = document.getElementById("cta");
+
+        if (bookingSection) {
+            bookingSection.scrollIntoView({ behavior: "smooth" });
+        }
+
+        updateHeadingText("Choose your date and time below.");
+    });
+}
+
+if (callBtn) {
+    callBtn.addEventListener("click", () => {
+        window.location.href = `tel:${shopInfo.phoneRaw}`;
+    });
+}
+
+if (featureGrid) {
+    featureGrid.addEventListener("click", (event) => {
+        const clickedButton = event.target.closest(".service-details-btn");
+        if (!clickedButton) return;
+
+        const serviceId = clickedButton.dataset.serviceId;
+        openServiceModal(serviceId);
+    });
+}
+
+if (serviceModalClose) {
+    serviceModalClose.addEventListener("click", closeServiceModal);
+}
+
+if (serviceModalOverlay) {
+    serviceModalOverlay.addEventListener("click", closeServiceModal);
+}
+
+document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+        closeServiceModal();
+    }
+});
+
+// ----- App Start -----
+setCurrentYear();
+renderNavigation();
+renderServices();
+setupScrollShiftCards();
+renderHours();
+renderContactInfo();
+checkIfOpen();
+        
