@@ -207,7 +207,7 @@ const updateHeadingText = (newText) => {
     if (!heading) return;
     heading.textContent = newText;
 };
-const updateSubText = (newText) => {
+const updateSubtext = (newText) => {
     if (!heroSubtext) return;
     heroSubtext.textContent = newText;
 };
