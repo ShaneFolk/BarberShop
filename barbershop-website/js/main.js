@@ -95,7 +95,7 @@ const services = [
         alt: "Straight Razor Shave",
         description: "Hot towel, smooth shave, and classic barbershop experience.",
         price: 30,
-        popular: false,
+        popular: true,
         details: [
         "Hot towel prep to soften facial hair and open pores.",
         "Premium shaving cream or lather applied to protect the skin.",
@@ -349,61 +349,143 @@ const checkIfOpen = () => {
     }
 };  
 
-// Scroll Shift Cards -----
-const setupScrollShiftCards = () => {
+// // Scroll Shift Cards -----
+// const setupScrollShiftCards = () => {
+//     if (!featureGrid) return;
+
+//     let lastscrollY = window.scrollY;
+//     let currentX = 0;
+//     let ticking = false;
+
+//     const getVisibleWidth = () => {
+//         const parent = featureGrid.parentElement;
+//         return parent ? parent.clientWidth : window.innerWidth;
+//     };
+
+//     const getMaxShift = () => {
+//         return Math.max(0, featureGrid.scrollWidth - getVisibleWidth());
+//     };
+
+//     const updateCardTrack = () => {
+//         const currentScrollY = window.scrollY;
+//         const scrollDelta = currentScrollY - lastscrollY;
+    
+//         if (scrollDelta === 0) {
+//             ticking = false;
+//             return;
+//         }
+
+//         currentX += scrollDelta * 0.5;
+
+//         const maxShift = getMaxShift();
+
+//         if (currentX < -maxShift) currentX = -maxShift;
+//         if (currentX > 0) currentX = 0;
+
+//         featureGrid.style.transform = `translateX(${currentX}px)`;
+
+//         lastscrollY = currentScrollY;
+//         ticking = false;
+//     };
+
+//     window.addEventListener("scroll", () => {
+//         if (!ticking) {
+//             window.requestAnimationFrame(updateCardTrack);
+//             ticking = true;
+//         }
+//     });
+
+//     window.addEventListener("resize", () => {
+//         const maxShift = getMaxShift();
+   
+//         if (currentX < -maxShift) currentX = -maxShift;
+//         if (currentX > 0) currentX = 0;
+
+//         featureGrid.style.transform = `translateX(${currentX}px)`;
+//     });
+// };
+
+// ---- DRAG TO SHIFT CARDS (TranslateX version) ----
+const setupDragShiftCards = () => {
     if (!featureGrid) return;
 
-    let lastscrollY = window.scrollY;
-    let currentX = 0;
-    let ticking = false;
+    let isDragging = false;
+    let startX = 0;
+    let currentTranslateX = 0;
+    let lastTranslateX = 0;
 
-    const getVisibleWidth = () => {
-        const parent = featureGrid.parentElement;
-        return parent ? parent.clientWidth : window.innerWidth;
-    };
-
+    // Helper to get max shift limit
     const getMaxShift = () => {
-        return Math.max(0, featureGrid.scrollWidth - getVisibleWidth());
+        const parent = featureGrid.parentElement;
+        const visibleWidth = parent ? parent.clientWidth : window.innerWidth;
+        return Math.max(0, featureGrid.scrollWidth - visibleWidth);
     };
 
-    const updateCardTrack = () => {
-        const currentScrollY = window.scrollY;
-        const scrollDelta = currentScrollY - lastscrollY;
-    
-        if (scrollDelta === 0) {
-            ticking = false;
-            return;
-        }
-
-        currentX += scrollDelta * 0.5;
-
+    // Function to apply transform safely
+    const applyTransform = (x) => {
         const maxShift = getMaxShift();
-
-        if (currentX < -maxShift) currentX = -maxShift;
-        if (currentX > 0) currentX = 0;
-
-        featureGrid.style.transform = `translateX(${currentX}px)`;
-
-        lastscrollY = currentScrollY;
-        ticking = false;
+        // Clamp the value so it doesn't go too far left or right
+        if (x < -maxShift) x = -maxShift;
+        if (x > 0) x = 0;
+        currentTranslateX = x;
+        featureGrid.style.transform = `translateX(${x}px)`;
     };
 
-    window.addEventListener("scroll", () => {
-        if (!ticking) {
-            window.requestAnimationFrame(updateCardTrack);
-            ticking = true;
+    // --- MOUSE EVENTS ---
+    featureGrid.addEventListener("mousedown", (e) => {
+        isDragging = true;
+        startX = e.pageX;
+        lastTranslateX = currentTranslateX;
+        featureGrid.style.cursor = "grabbing";
+        featureGrid.style.transition = "none"; // Remove transition for instant drag
+    });
+
+    window.addEventListener("mousemove", (e) => {
+        if (!isDragging) return;
+        e.preventDefault();
+        const deltaX = e.pageX - startX;
+        applyTransform(lastTranslateX + deltaX);
+    });
+
+    window.addEventListener("mouseup", () => {
+        if (isDragging) {
+            isDragging = false;
+            featureGrid.style.cursor = "grab";
+            featureGrid.style.transition = "transform 0.3s ease"; // Re-add smooth snap
         }
     });
 
+    // --- TOUCH EVENTS (For Mobile) ---
+    featureGrid.addEventListener("touchstart", (e) => {
+        isDragging = true;
+        startX = e.touches[0].pageX;
+        lastTranslateX = currentTranslateX;
+        featureGrid.style.transition = "none";
+    });
+
+    window.addEventListener("touchmove", (e) => {
+        if (!isDragging) return;
+        const deltaX = e.touches[0].pageX - startX;
+        applyTransform(lastTranslateX + deltaX);
+    });
+
+    window.addEventListener("touchend", () => {
+        if (isDragging) {
+            isDragging = false;
+            featureGrid.style.transition = "transform 0.3s ease";
+        }
+    });
+
+    // --- RESIZE HANDLER ---
     window.addEventListener("resize", () => {
-        const maxShift = getMaxShift();
-   
-        if (currentX < -maxShift) currentX = -maxShift;
-        if (currentX > 0) currentX = 0;
-
-        featureGrid.style.transform = `translateX(${currentX}px)`;
+        // If window gets smaller, clamp the current position so it doesn't hang off screen
+        applyTransform(currentTranslateX);
     });
+
+    // Initial cursor style
+    featureGrid.style.cursor = "grab";
 };
+
 
    // --- Event Listeners ---
 if (menuBtn) {
@@ -464,7 +546,8 @@ document.addEventListener("keydown", (event) => {
 setCurrentYear();
 renderNavigation();
 renderServices();
-setupScrollShiftCards();
+// setupScrollShiftCards();
+setupDragShiftCards();
 renderHours();
 renderContactInfo();
 checkIfOpen();
