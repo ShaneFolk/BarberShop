@@ -123,7 +123,7 @@ const services = [
     {
         id: 5,
         title: "Kids Cut",
-        image: "assets/images/feature-1.jpg",
+        image: "assets/images/feature-6.jpg",
         alt: "Kids Haircut",
         description: "Clean, comfortable haircut service for younger clients.",
         price: 20,
@@ -139,7 +139,7 @@ const services = [
     {
         id: 6,
         title: "Head Shave",
-        image: "assets/images/feature-3.jpg",
+        image: "assets/images/feature-5.jpg",
         alt: "Head Shave",
         description: "Smooth head with classic barbershop treatment.",
         price: 28,
