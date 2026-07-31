@@ -221,4 +221,92 @@ const renderTimeSlots = () => {
       slotBtn.disabled = true;
       slotBtn.textContent = `${slot} - Booked`;
     }
-    
+   
+    if (selectedTime === slot) {
+      slotBtn.classList.add("selected");
+    }
+
+    slotBtn.addEventListener("click", () => {
+      selectedTime = slot;
+      selectedTimeInput.value = slot;
+      renderTimeSlots();
+    });
+
+    timeSlots.appendChild(slotBtn);
+  }
+};
+
+// ---- Month Navigation ----
+if (prevMonthBtn) {
+  prevMonthBtn.addEventListener("click", () => {
+    currentMonth--;
+
+    if (currentMonth < 0) {
+      currentMonth = 11;
+      currentYear--;
+    }
+
+    renderCalendar();
+  });
+}
+
+if (nextMonthBtn) {
+  nextMonthBtn.addEventListener("click", () => {
+    currentMonth++;
+
+    if (currentMonth > 11) {
+      currentMonth = 0;
+      currentYear++;
+    }
+
+    renderCalendar();
+  });
+}
+
+// ---- Booking submit ----
+if (bookingForm) {
+  bookingForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+
+    const nameValue = customerName.value.trim();
+    const serviceValue = customerService.value;
+    const timeValue = selectedTimeInput.value;
+
+    if (nameValue === "" || serviceValue === "" || !selectedDate || timeValue === "") {
+        bookingMessage.textContent = "Please choose a date, time, name, and service.";
+        bookingMessage.className = "booking-message error";
+        return;
+  }
+
+    if (!bookedAppointments[selectedDate.key]) {
+        bookedAppointments[selectedDate.key] = [];
+  }
+
+    if (bookedAppointments[selectedDate.key].includes(timeValue)) {
+        bookingMessage.textContent = "That time was just taken. Please choose another.";
+        bookingMessage.className = "booking-message error";
+        renderTimeSlots();
+        return;
+    }
+
+    bookedAppointments[selectedDate.key].push(timeValue);
+
+    bookingMessage.textContent = `${nameValue}, your ${serviceValue} appointment is booked for ${formatReadableDate(
+      selectedDate.year,
+      selectedDate.month,
+      selectedDate.day
+    )} at ${timeValue}.`;
+
+    bookingMessage.className = "booking-message success";
+
+    bookingForm.reset();
+    selectedTime = "";
+    selectedTimeInput.value = "";
+
+    renderTimeSlots();
+  });
+}
+
+// ---- App Start ----
+renderCalendar();
+renderTimeSlots();
