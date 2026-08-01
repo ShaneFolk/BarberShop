@@ -58,7 +58,7 @@ const navLinks = [
 const services = [
     {
         id: 1,
-        title: "classic haircut",
+        title: "Classic Haircut",
         image: "assets/images/feature-1.jpg",
         alt: "Classic Haircut",
         description: "Timeless haircuts with modern precision-tailored to your style.",
@@ -74,7 +74,7 @@ const services = [
     },
     {
         id: 2,
-        title: "beard trim",
+        title: "Beard Trim",
         image: "assets/images/feature-4.jpeg",
         alt: "Beard Trim",
         description: "Shape, line-up, and refine your beard for a clean finish.",
@@ -271,7 +271,7 @@ const renderServices = () => {
             class="feature-img"
              />
              <h3 class="feature-title">${service.title}</h3>
-             <p class="feature-description">${service.description}</p>
+             <p class="feature-text">${service.description}</p>
              ${badgeHTML}
              <p class="feature-price">$${service.price}</p>
 
